@@ -1,86 +1,60 @@
-import React, { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import { RefreshCw, ArrowUp, ArrowDown } from 'lucide-react';
+import streamlit as st
+import requests
+import pandas as pd
+import plotly.express as px
+import time
 
-export default function CryptoDashboard() {
-  const [prices, setPrices] = useState([]);
-  const [loading, setLoading] = useState(true);
+st.set_page_config(page_title="Crypto Dashboard", layout="wide")
 
-  useEffect(() => {
-    fetchPrices();
-    const interval = setInterval(fetchPrices, 30000); // Update every 30 seconds
-    return () => clearInterval(interval);
-  }, []);
+def fetch_prices():
+    try:
+        response = requests.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,ripple&vs_currencies=usd&include_24hr_change=true')
+        data = response.json()
+        return [
+            {
+                'name': 'Bitcoin',
+                'price': data['bitcoin']['usd'],
+                'change': data['bitcoin']['usd_24h_change']
+            },
+            {
+                'name': 'Ethereum',
+                'price': data['ethereum']['usd'],
+                'change': data['ethereum']['usd_24h_change']
+            },
+            {
+                'name': 'Ripple',
+                'price': data['ripple']['usd'],
+                'change': data['ripple']['usd_24h_change']
+            }
+        ]
+    except Exception as e:
+        st.error(f"Error fetching prices: {e}")
+        return []
 
-  const fetchPrices = async () => {
-    try {
-      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,ripple&vs_currencies=usd&include_24hr_change=true');
-      const data = await response.json();
-      setPrices([
-        {
-          name: 'Bitcoin',
-          price: data.bitcoin.usd,
-          change: data.bitcoin.usd_24h_change
-        },
-        {
-          name: 'Ethereum',
-          price: data.ethereum.usd,
-          change: data.ethereum.usd_24h_change
-        },
-        {
-          name: 'Ripple',
-          price: data.ripple.usd,
-          change: data.ripple.usd_24h_change
-        }
-      ]);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching prices:', error);
-      setLoading(false);
-    }
-  };
+st.title("Crypto Dashboard")
 
-  return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Crypto Dashboard</h1>
-        <button 
-          onClick={fetchPrices}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          <RefreshCw size={16} />
-          Refresh
-        </button>
-      </div>
+if st.button('Refresh'):
+    prices = fetch_prices()
+    st.session_state.prices = prices
+else:
+    if 'prices' not in st.session_state:
+        st.session_state.prices = fetch_prices()
+    prices = st.session_state.prices
 
-      {loading ? (
-        <div className="text-center py-12">Loading...</div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {prices.map((coin) => (
-            <div key={coin.name} className="p-4 border rounded-lg shadow">
-              <h2 className="text-xl font-semibold mb-2">{coin.name}</h2>
-              <div className="flex justify-between items-center">
-                <span className="text-2xl">${coin.price.toLocaleString()}</span>
-                <div className={`flex items-center ${coin.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {coin.change >= 0 ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
-                  <span className="ml-1">{Math.abs(coin.change).toFixed(2)}%</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+if prices:
+    df = pd.DataFrame(prices)
+    st.dataframe(df)
 
-      <div className="mt-8">
-        <LineChart width={800} height={300} data={prices}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip />
-          <Line type="monotone" dataKey="price" stroke="#8884d8" />
-        </LineChart>
-      </div>
-    </div>
-  );
-}
+    fig = px.line(df, x='name', y='price', title='Crypto Prices')
+    st.plotly_chart(fig)
+
+    for coin in prices:
+        st.metric(
+            label=coin['name'],
+            value=f"${coin['price']:,.2f}",
+            delta=f"{coin['change']:.2f}%"
+        )
+
+st.text("Updating every 30 seconds...")
+time.sleep(30)  # Simulate update interval
+st.experimental_rerun()
