@@ -2,46 +2,32 @@ import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { RefreshCw, ArrowUp, ArrowDown } from 'lucide-react';
 
-const logoUrls = {
-  'Bitcoin': 'path/to/bitcoin_logo.png',
-  'Ethereum': 'path/to/ethereum_logo.png',
-  'Ripple': 'path/to/ripple_logo.png'
-};
-
 export default function CryptoDashboard() {
-  const [prices, setPrices] = useState([]);
+  const [prices, setPrices] = useState();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchPrices();
     const interval = setInterval(fetchPrices, 30000); // Update every 30 seconds
     return () => clearInterval(interval);
-  }, []);
+  },);
 
   const fetchPrices = async () => {
     try {
-      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,ripple&vs_currencies=usd&include_24hr_change=true');
+      const response = await fetch(`https://min-api.cryptocompare.com/data/pricemultifull?fsyms=BTC,ETH,XRP&tsyms=USD&api_key=33b4a3f0dd821573ed1c47331c8d0ec7aa886644e91bf4cd0b3d49acb86bc87f`);
       const data = await response.json();
-      setPrices([
-        {
-          name: 'Bitcoin',
-          price: data.bitcoin.usd,
-          change: data.bitcoin.usd_24h_change,
-          logo: logoUrls['Bitcoin']
-        },
-        {
-          name: 'Ethereum',
-          price: data.ethereum.usd,
-          change: data.ethereum.usd_24h_change,
-          logo: logoUrls['Ethereum']
-        },
-        {
-          name: 'Ripple',
-          price: data.ripple.usd,
-          change: data.ripple.usd_24h_change,
-          logo: logoUrls['Ripple']
-        }
-      ]);
+      
+      const formattedData = Object.entries(data.RAW).map(([coinSymbol, coinData]) => {
+        const usdData = coinData.USD;
+        return {
+          name: usdData.FROMSYMBOL,
+          price: usdData.PRICE,
+          change: usdData.CHANGEPCT24HOUR,
+          logo: `https://www.cryptocompare.com${usdData.IMAGEURL}`
+        };
+      });
+      
+      setPrices(formattedData);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching prices:', error);
@@ -61,9 +47,9 @@ export default function CryptoDashboard() {
           Refresh
         </button>
       </div>
-      {loading ? (
+      {loading? (
         <div className="text-center py-12">Loading...</div>
-      ) : (
+      ): (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {prices.map((coin) => (
             <div key={coin.name} className="p-4 border rounded-lg shadow">
@@ -73,8 +59,8 @@ export default function CryptoDashboard() {
               </h2>
               <div className="flex justify-between items-center">
                 <span className="text-2xl">${coin.price.toLocaleString()}</span>
-                <div className={`flex items-center ${coin.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {coin.change >= 0 ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
+                <div className={`flex items-center ${coin.change >= 0? 'text-green-500': 'text-red-500'}`}>
+                  {coin.change >= 0? <ArrowUp size={16} />: <ArrowDown size={16} />}
                   <span className="ml-1">{Math.abs(coin.change).toFixed(2)}%</span>
                 </div>
               </div>
