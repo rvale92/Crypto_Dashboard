@@ -16,17 +16,17 @@ export default function CryptoDashboard() {
     try {
       const response = await fetch(`https://min-api.cryptocompare.com/data/pricemultifull?fsyms=BTC,ETH,XRP&tsyms=USD&api_key=33b4a3f0dd821573ed1c47331c8d0ec7aa886644e91bf4cd0b3d49acb86bc87f`);
       const data = await response.json();
-      
+
       const formattedData = Object.entries(data.RAW).map(([coinSymbol, coinData]) => {
         const usdData = coinData.USD;
         return {
           name: usdData.FROMSYMBOL,
           price: usdData.PRICE,
           change: usdData.CHANGEPCT24HOUR,
-          logo: `https://www.cryptocompare.com${usdData.IMAGEURL}`
+          logo: `https://www.cryptocompare.com${usdData.IMAGEURL}` // Prepend the base URL
         };
       });
-      
+
       setPrices(formattedData);
       setLoading(false);
     } catch (error) {
