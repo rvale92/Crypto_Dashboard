@@ -30,7 +30,23 @@ export default function CryptoDashboard() {
 
       const formattedData = Object.entries(data.RAW).map(([coinSymbol, coinData]) => {
         const usdData = coinData.USD;
-        const imageUrl = usdData.IMAGEURL ? `https://www.cryptocompare.com${usdData.IMAGEURL}` : '/fallback-logo.png';
+        let imageUrl = '';
+
+        // Choose the appropriate fallback image based on the coin name
+        switch (coinSymbol) {
+          case 'BTC':
+            imageUrl = usdData.IMAGEURL ? `https://www.cryptocompare.com${usdData.IMAGEURL}` : '/bitcoin-publicfallback-logo.png';
+            break;
+          case 'ETH':
+            imageUrl = usdData.IMAGEURL ? `https://www.cryptocompare.com${usdData.IMAGEURL}` : '/ethereum-publicfallback-logo.png';
+            break;
+          case 'XRP':
+            imageUrl = usdData.IMAGEURL ? `https://www.cryptocompare.com${usdData.IMAGEURL}` : '/ripple-publicfallback-logo.png';
+            break;
+          default:
+            imageUrl = '/fallback-logo.png'; // Generic fallback
+            break;
+        }
 
         return {
           name: usdData.FROMSYMBOL,
@@ -67,7 +83,7 @@ export default function CryptoDashboard() {
           Refresh
         </button>
       </div>
-      
+
       {loading ? (
         <div className="text-center py-12">Loading...</div>
       ) : (
