@@ -2,15 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { RefreshCw, ArrowUp, ArrowDown } from 'lucide-react';
 
+const logoUrls = {
+  'Bitcoin': 'path/to/bitcoin_logo.png',
+  'Ethereum': 'path/to/ethereum_logo.png',
+  'Ripple': 'path/to/ripple_logo.png'
+};
+
 export default function CryptoDashboard() {
-  const [prices, setPrices] = useState();
+  const [prices, setPrices] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchPrices();
     const interval = setInterval(fetchPrices, 30000); // Update every 30 seconds
     return () => clearInterval(interval);
-  },);
+  }, []);
 
   const fetchPrices = async () => {
     try {
@@ -20,17 +26,20 @@ export default function CryptoDashboard() {
         {
           name: 'Bitcoin',
           price: data.bitcoin.usd,
-          change: data.bitcoin.usd_24h_change
+          change: data.bitcoin.usd_24h_change,
+          logo: logoUrls['Bitcoin']
         },
         {
           name: 'Ethereum',
           price: data.ethereum.usd,
-          change: data.ethereum.usd_24h_change
+          change: data.ethereum.usd_24h_change,
+          logo: logoUrls['Ethereum']
         },
         {
           name: 'Ripple',
           price: data.ripple.usd,
-          change: data.ripple.usd_24h_change
+          change: data.ripple.usd_24h_change,
+          logo: logoUrls['Ripple']
         }
       ]);
       setLoading(false);
@@ -52,17 +61,20 @@ export default function CryptoDashboard() {
           Refresh
         </button>
       </div>
-      {loading? (
+      {loading ? (
         <div className="text-center py-12">Loading...</div>
-      ): (
+      ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {prices.map((coin) => (
             <div key={coin.name} className="p-4 border rounded-lg shadow">
-              <h2 className="text-xl font-semibold mb-2">{coin.name}</h2>
+              <h2 className="text-xl font-semibold mb-2">
+                <img src={coin.logo} alt={coin.name} style={{ width: '20px', marginRight: '10px' }} />
+                {coin.name}
+              </h2>
               <div className="flex justify-between items-center">
                 <span className="text-2xl">${coin.price.toLocaleString()}</span>
-                <div className={`flex items-center ${coin.change >= 0? 'text-green-500': 'text-red-500'}`}>
-                  {coin.change >= 0? <ArrowUp size={16} />: <ArrowDown size={16} />}
+                <div className={`flex items-center ${coin.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {coin.change >= 0 ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
                   <span className="ml-1">{Math.abs(coin.change).toFixed(2)}%</span>
                 </div>
               </div>
