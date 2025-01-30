@@ -6,6 +6,13 @@ import time
 
 st.set_page_config(page_title="Crypto Dashboard", layout="wide")
 
+# Add this dictionary at the top of the file, after the imports
+logo_urls = {
+    'Bitcoin': 'path/to/bitcoin_logo.png',
+    'Ethereum': 'path/to/ethereum_logo.png',
+    'Ripple': 'path/to/ripple_logo.png'
+}
+
 def fetch_prices():
     try:
         response = requests.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,ripple&vs_currencies=usd&include_24hr_change=true')
@@ -14,17 +21,20 @@ def fetch_prices():
             {
                 'name': 'Bitcoin',
                 'price': data['bitcoin']['usd'],
-                'change': data['bitcoin']['usd_24h_change']
+                'change': data['bitcoin']['usd_24h_change'],
+                'logo': logo_urls['Bitcoin']
             },
             {
                 'name': 'Ethereum',
                 'price': data['ethereum']['usd'],
-                'change': data['ethereum']['usd_24h_change']
+                'change': data['ethereum']['usd_24h_change'],
+                'logo': logo_urls['Ethereum']
             },
             {
                 'name': 'Ripple',
                 'price': data['ripple']['usd'],
-                'change': data['ripple']['usd_24h_change']
+                'change': data['ripple']['usd_24h_change'],
+                'logo': logo_urls['Ripple']
             }
         ]
     except Exception as e:
@@ -50,7 +60,7 @@ if prices:
 
     for coin in prices:
         st.metric(
-            label=coin['name'],
+            label=f"{coin['name']}  ![logo]({coin['logo']})",
             value=f"${coin['price']:,.2f}",
             delta=f"{coin['change']:.2f}%"
         )
