@@ -5,7 +5,6 @@ import { RefreshCw, ArrowUp, ArrowDown } from 'lucide-react';
 export default function CryptoDashboard() {
   const [prices, setPrices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [imageErrors, setImageErrors] = useState({});
 
   useEffect(() => {
     fetchPrices();
@@ -28,33 +27,18 @@ export default function CryptoDashboard() {
         return;
       }
 
-      const formattedData = Object.entries(data.RAW).map(([coinSymbol, coinData]) => {
-        const usdData = coinData.USD;
-        let imageUrl = '';
+      const imageUrls = {
+        BTC: 'https://www.cryptocompare.com/media/37746251/btc.png',
+        ETH: 'https://www.cryptocompare.com/media/37746238/eth.png',
+        XRP: 'https://www.cryptocompare.com/media/38553096/xrp.png',
+      };
 
-        // Choose the appropriate fallback image based on the coin name
-        switch (coinSymbol) {
-          case 'BTC':
-            imageUrl = usdData.IMAGEURL ? `https://www.cryptocompare.com${usdData.IMAGEURL}` : '/bitcoin-publicfallback-logo.png';
-            break;
-          case 'ETH':
-            imageUrl = usdData.IMAGEURL ? `https://www.cryptocompare.com${usdData.IMAGEURL}` : '/ethereum-publicfallback-logo.png';
-            break;
-          case 'XRP':
-            imageUrl = usdData.IMAGEURL ? `https://www.cryptocompare.com${usdData.IMAGEURL}` : '/ripple-publicfallback-logo.png';
-            break;
-          default:
-            imageUrl = '/fallback-logo.png'; // Generic fallback
-            break;
-        }
-
-        return {
-          name: usdData.FROMSYMBOL,
-          price: usdData.PRICE,
-          change: usdData.CHANGEPCT24HOUR,
-          logo: imageUrl
-        };
-      });
+      const formattedData = Object.entries(data.RAW).map(([coinSymbol, coinData]) => ({
+        name: coinSymbol,
+        price: coinData.USD.PRICE,
+        change: coinData.USD.CHANGEPCT24HOUR,
+        logo: imageUrls[coinSymbol] || 'https://your-server.com/default-logo.png', // Fallback image
+      }));
 
       setPrices(formattedData);
       setLoading(false);
@@ -62,13 +46,6 @@ export default function CryptoDashboard() {
       console.error('Error fetching prices:', error);
       setLoading(false);
     }
-  };
-
-  const handleImageError = (coinName) => {
-    setImageErrors(prev => ({
-      ...prev,
-      [coinName]: true
-    }));
   };
 
   return (
@@ -91,14 +68,12 @@ export default function CryptoDashboard() {
           {prices.map((coin) => (
             <div key={coin.name} className="p-4 border rounded-lg shadow">
               <div className="flex items-center mb-2">
-                {!imageErrors[coin.name] && coin.logo && (
-                  <img
-                    src={coin.logo}
-                    alt={`${coin.name} logo`}
-                    className="w-6 h-6 mr-2 object-contain"
-                    onError={() => handleImageError(coin.name)}
-                  />
-                )}
+                <img
+                  src={coin.logo}
+                  alt={`${coin.name} logo`}
+                  className="w-6 h-6 mr-2 object-contain"
+                  onError={(e) => (e.target.src = 'https://your-server.com/default-logo.png')} // Fallback if image fails
+                />
                 <h2 className="text-xl font-semibold">{coin.name}</h2>
               </div>
               <div className="flex justify-between items-center">
