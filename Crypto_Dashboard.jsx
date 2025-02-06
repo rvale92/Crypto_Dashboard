@@ -4,30 +4,25 @@ import requests
 import time
 import plotly.express as px
 
-# Function to verify image URLs
+# Function to verify image URLs with User-Agent header
 def is_valid_image(url):
     try:
-        response = requests.get(url, timeout=5)
+        headers = {"User-Agent": "Mozilla/5.0"}
+        response = requests.get(url, headers=headers, timeout=5)
         if response.status_code == 200:
             return url
     except:
         pass
-    return "https://via.placeholder.com/50"  # Fallback image
+    return "https://via.placeholder.com/50"
 
-# Crypto image URLs
+# Updated Crypto image URLs (CoinGecko)
 image_map = {
-    "BTC": "https://www.cryptocompare.com/media/37746251/btc.png",
-    "ETH": "https://www.cryptocompare.com/media/37746238/eth.png",
-    "XRP": "https://www.cryptocompare.com/media/38553096/xrp.png"
+    "BTC": "https://assets.coingecko.com/coins/images/1/large/bitcoin.png?1547033579",
+    "ETH": "https://assets.coingecko.com/coins/images/279/large/ethereum.png?1595348880",
+    "XRP": "https://assets.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png?1605778731"
 }
 
-# Function to fetch crypto data (replace with actual API if needed)
-def get_crypto_data():
-    return [
-        {"name": "Bitcoin", "price": 97301.00, "change": -1.43, "symbol": "BTC"},
-        {"name": "Ethereum", "price": 2802.67, "change": 3.32, "symbol": "ETH"},
-        {"name": "XRP", "price": 2.42, "change": -2.56, "symbol": "XRP"},
-    ]
+# Rest of your code remains the same...
 
 # Fetch data
 df = pd.DataFrame(get_crypto_data())
