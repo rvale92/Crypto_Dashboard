@@ -1,102 +1,67 @@
-import React, { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import { RefreshCw, ArrowUp, ArrowDown } from 'lucide-react';
+import streamlit as st
+import pandas as pd
+import requests
+import time
+import plotly.express as px
 
-export default function CryptoDashboard() {
-  const [prices, setPrices] = useState([]);
-  const [loading, setLoading] = useState(true);
+# Function to verify image URLs
+def is_valid_image(url):
+    try:
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            return url
+    except:
+        pass
+    return "https://via.placeholder.com/50"  # Fallback image
 
-  useEffect(() => {
-    fetchPrices();
-    const interval = setInterval(fetchPrices, 30000); // Update every 30 seconds
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchPrices = async () => {
-    try {
-      const response = await fetch(
-        'https://min-api.cryptocompare.com/data/pricemultifull?fsyms=BTC,ETH,XRP&tsyms=USD&api_key=33b4a3f0dd821573ed1c47331c8d0ec7aa886644e91bf4cd0b3d49acb86bc87f'
-      );
-      const data = await response.json();
-
-      console.log('API Response:', data); // Debugging
-
-      if (!data.RAW) {
-        console.error('Error: No RAW data found in response');
-        setLoading(false);
-        return;
-      }
-
-      const imageUrls = {
-        BTC: 'https://www.cryptocompare.com/media/37746251/btc.png',
-        ETH: 'https://www.cryptocompare.com/media/37746238/eth.png',
-        XRP: 'https://www.cryptocompare.com/media/38553096/xrp.png',
-      };
-
-      const formattedData = Object.entries(data.RAW).map(([coinSymbol, coinData]) => ({
-        name: coinSymbol,
-        price: coinData.USD.PRICE,
-        change: coinData.USD.CHANGEPCT24HOUR,
-        logo: imageUrls[coinSymbol] || 'https://your-server.com/default-logo.png', // Fallback image
-      }));
-
-      setPrices(formattedData);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching prices:', error);
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Crypto Dashboard</h1>
-        <button
-          onClick={fetchPrices}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          <RefreshCw size={16} />
-          Refresh
-        </button>
-      </div>
-
-      {loading ? (
-        <div className="text-center py-12">Loading...</div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {prices.map((coin) => (
-            <div key={coin.name} className="p-4 border rounded-lg shadow">
-              <div className="flex items-center mb-2">
-                <img
-                  src={coin.logo}
-                  alt={`${coin.name} logo`}
-                  className="w-6 h-6 mr-2 object-contain"
-                  onError={(e) => (e.target.src = 'https://your-server.com/default-logo.png')} // Fallback if image fails
-                />
-                <h2 className="text-xl font-semibold">{coin.name}</h2>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-2xl">${coin.price.toLocaleString()}</span>
-                <div className={`flex items-center ${coin.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {coin.change >= 0 ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
-                  <span className="ml-1">{Math.abs(coin.change).toFixed(2)}%</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="mt-8">
-        <LineChart width={800} height={300} data={prices}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip />
-          <Line type="monotone" dataKey="price" stroke="#8884d8" />
-        </LineChart>
-      </div>
-    </div>
-  );
+# Crypto image URLs
+image_map = {
+    "BTC": "https://www.cryptocompare.com/media/37746251/btc.png",
+    "ETH": "https://www.cryptocompare.com/media/37746238/eth.png",
+    "XRP": "https://www.cryptocompare.com/media/38553096/xrp.png"
 }
+
+# Function to fetch crypto data (replace with actual API if needed)
+def get_crypto_data():
+    return [
+        {"name": "Bitcoin", "price": 97301.00, "change": -1.43, "symbol": "BTC"},
+        {"name": "Ethereum", "price": 2802.67, "change": 3.32, "symbol": "ETH"},
+        {"name": "XRP", "price": 2.42, "change": -2.56, "symbol": "XRP"},
+    ]
+
+# Fetch data
+df = pd.DataFrame(get_crypto_data())
+
+# Streamlit Layout
+st.title("🚀 Crypto Dashboard")
+
+# Refresh Button
+if st.button("🔄 Refresh Data"):
+    st.experimental_rerun()
+
+# Display Crypto Data with Images
+st.subheader("💰 Live Crypto Prices")
+for _, row in df.iterrows():
+    col1, col2 = st.columns([1, 5])
+    
+    with col1:
+        image_url = is_valid_image(image_map.get(row["symbol"], ""))
+        st.image(image_url, width=50)
+
+    with col2:
+        st.markdown(f"**{row['name']}**")
+        st.write(f"💰 ${row['price']:.2f}")
+        change_color = "🔺" if row["change"] > 0 else "🔻"
+        st.write(f"{change_color} {row['change']}%")
+
+# Convert data for chart
+df_chart = df[["name", "price"]]
+fig = px.line(df_chart, x="name", y="price", title="Crypto Prices")
+
+# Show Chart
+st.plotly_chart(fig)
+
+# Auto-update
+st.write("🔄 Updating every 30 seconds...")
+time.sleep(30)
+st.experimental_rerun()
