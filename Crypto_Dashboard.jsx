@@ -9,10 +9,11 @@ def is_valid_image(url):
     try:
         headers = {"User-Agent": "Mozilla/5.0"}
         response = requests.get(url, headers=headers, timeout=5)
+        st.write(f"URL: {url} - Status Code: {response.status_code}")
         if response.status_code == 200:
             return url
-    except:
-        pass
+    except Exception as e:
+        st.write(f"URL: {url} - Error: {e}")
     return "https://via.placeholder.com/50"  # Fallback image
 
 # CoinGecko image URLs (uppercase keys)
